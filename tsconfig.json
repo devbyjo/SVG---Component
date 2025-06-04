@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "lib": ["es6", "dom", "ES2015"], // ES2015 for Promise
+    "module": "commonjs", // Output CommonJS modules
+    "strict": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "typeRoots": ["./node_modules/@types", "./node_modules/@figma"], // For Figma typings
+    "outDir": "./dist" // Output compiled JS to dist folder
+  },
+  "include": ["./code.ts"] // Only compile code.ts
+}

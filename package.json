@@ -1,0 +1,24 @@
+{
+  "name": "figma-svg-to-component",
+  "version": "1.0.0",
+  "description": "Figma plugin to convert SVGs to component sets with variants.",
+  "main": "dist/code.js",
+  "scripts": {
+    "build": "esbuild code.ts --bundle --outfile=dist/code.js --platform=browser --format=iife --global-name=__figmaPlugin --target=es2017 && cp ui.html dist/ui.html",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "figma",
+    "plugin",
+    "svg",
+    "component"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.113.0",
+    "esbuild": "^0.25.5",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Komponent SVG Converter</title>
+  <style>
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+      padding: 16px; 
+      margin: 0;
+      background-color: #f0f0f0;
+      color: #333;
+    }
+    h2 {
+      margin-top: 0;
+      color: #111;
+    }
+    p {
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    input[type="file"] { 
+      display: block; 
+      margin-bottom: 16px; 
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: #fff;
+    }
+    button { 
+      padding: 10px 18px; 
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      transition: background-color 0.2s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+    #status {
+      margin-top: 16px;
+      font-size: 12px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h2>Komponent: SVG to Component Set</h2>
+  <p>Select one or more SVG files. Each file will be converted into a Figma component set named <code>JP_<filename></code> with "Squarical", "Circular", and "Borderless" variants.</p>
+  
+  <input type="file" id="svgFileInput" multiple accept=".svg">
+  <button id="convertButton">Convert SVGs</button>
+  <div id="status"></div>
+
+  <script>
+    const svgFileInput = document.getElementById('svgFileInput');
+    const convertButton = document.getElementById('convertButton');
+    const statusDiv = document.getElementById('status');
+
+    convertButton.onclick = () => {
+      const files = svgFileInput.files;
+      if (!files || files.length === 0) {
+        statusDiv.textContent = 'Please select at least one SVG file.';
+        statusDiv.style.color = 'red';
+        return;
+      }
+
+      convertButton.disabled = true;
+      statusDiv.textContent = `Processing ${files.length} file(s)...`;
+      statusDiv.style.color = '#555';
+
+      const svgDataPromises = Array.from(files).map(file => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            resolve({
+              filename: file.name,
+              svgContent: event.target.result
+            });
+          };
+          reader.onerror = (error) => {
+            console.error('File reading error:', error);
+            reject({ filename: file.name, error: 'File reading error' });
+          };
+          reader.readAsText(file);
+        });
+      });
+
+      Promise.allSettled(svgDataPromises)
+        .then(results => {
+          const successfulReads = [];
+          const failedReads = [];
+
+          results.forEach(result => {
+            if (result.status === 'fulfilled') {
+              successfulReads.push(result.value);
+            } else {
+              failedReads.push(result.reason);
+            }
+          });
+
+          if (failedReads.length > 0) {
+            const failedFilenames = failedReads.map(f => f.filename).join(', ');
+            statusDiv.textContent = `Error reading some files: ${failedFilenames}. Check console.`;
+            statusDiv.style.color = 'red';
+            // Still send successful reads if any
+          }
+          
+          if (successfulReads.length > 0) {
+            parent.postMessage({ pluginMessage: { type: 'convert-svgs', svgs: successfulReads } }, '*');
+            // Status update will come from the plugin code via figma.notify
+          } else if (failedReads.length === 0) {
+             statusDiv.textContent = 'No files processed.';
+          }
+        })
+        .catch(error => { // Should not be reached if using Promise.allSettled correctly for reads
+          console.error('General error processing files:', error);
+          statusDiv.textContent = 'An unexpected error occurred. Check console.';
+          statusDiv.style.color = 'red';
+        })
+        .finally(() => {
+            // Re-enable button unless plugin code handles UI state further
+            // convertButton.disabled = false; 
+            // For now, let figma.notify be the primary feedback after this point.
+        });
+    };
+
+    // Listen for messages from the plugin code (e.g., completion or errors)
+    window.onmessage = (event) => {
+      const message = event.data.pluginMessage;
+      if (message) {
+        if (message.type === 'conversion-complete') {
+          statusDiv.textContent = message.message;
+          statusDiv.style.color = 'green';
+          svgFileInput.value = ''; // Clear file input
+          convertButton.disabled = false;
+        } else if (message.type === 'conversion-error') {
+          statusDiv.textContent = `Error: ${message.message}`;
+          statusDiv.style.color = 'red';
+          convertButton.disabled = false;
+        } else if (message.type === 'processing-status') {
+            statusDiv.textContent = message.message;
+            statusDiv.style.color = '#555';
+        }
+      }
+    }
+
+  </script>
+</body>
+</html>
