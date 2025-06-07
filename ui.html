@@ -1,94 +1,271 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Komponent SVG Converter</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Komponent Plugin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-      padding: 16px; 
+    :root {
+      --bg-main: #FDFBF8; /* Warm off-white/light beige */
+      --bg-card: #F9F3F0; /* Muted beige/light blush pink */
+      --text-primary: #5D5753; /* Dark warm gray */
+      --text-secondary: #8A817C; /* Lighter warm gray */
+      --text-heading: #4A423D; /* Richer dark warm gray */
+      --accent-primary: #FF8C6F; /* Soft coral */
+      --accent-primary-hover: #FF704D;
+      --accent-secondary: #BCA0DC; /* Faded lavender - for learn more or subtle accents */
+      --success-bg: #E6F2E6;
+      --success-text: #508C50;
+      --border-soft: #E0D8D3;
+      --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.05), 0 2px 6px rgba(0, 0, 0, 0.03);
+      --border-radius-medium: 10px;
+      --border-radius-large: 12px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-primary);
       margin: 0;
-      background-color: #f0f0f0;
-      color: #333;
+      padding: 24px;
+      font-size: 14px;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 48px); /* Full height minus padding */
+      box-sizing: border-box;
     }
-    h2 {
-      margin-top: 0;
-      color: #111;
+
+    .plugin-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background-color: var(--accent-secondary);
+      color: white;
+      padding: 4px 8px;
+      border-radius: var(--border-radius-medium);
+      font-size: 11px;
+      font-weight: 600;
+      opacity: 0.8;
     }
-    p {
+
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-heading);
+      margin: 0 0 4px 0;
+    }
+
+    .header .subtitle {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--accent-primary);
+      margin-bottom: 12px;
+    }
+
+    .header p {
       font-size: 13px;
+      color: var(--text-secondary);
+      max-width: 320px;
+      margin: 0 auto;
       line-height: 1.5;
+    }
+    .header p strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .upload-area {
+      background-color: var(--bg-card);
+      border: 2px dashed var(--border-soft);
+      border-radius: var(--border-radius-large);
+      padding: 32px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-soft);
+    }
+    .upload-area:hover, .upload-area.dragover {
+      border-color: var(--accent-primary);
+      background-color: #FBF5F2; /* Slightly more blush on hover */
+    }
+    .upload-area p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .upload-area .upload-icon {
+        font-size: 28px;
+        margin-bottom: 8px;
+        color: var(--accent-primary);
+    }
+
+    #svgFileInput {
+      display: none; /* Hidden, triggered by dropzone click */
+    }
+
+    .cta-button {
+      background-color: var(--accent-primary);
+      color: white;
+      border: none;
+      border-radius: var(--border-radius-medium);
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05), 0 4px 8px rgba(255, 140, 111, 0.2);
+      transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
       margin-bottom: 16px;
     }
-    input[type="file"] { 
-      display: block; 
-      margin-bottom: 16px; 
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      background-color: #fff;
+    .cta-button:hover {
+      background-color: var(--accent-primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.07), 0 6px 12px rgba(255, 112, 77, 0.25);
     }
-    button { 
-      padding: 10px 18px; 
-      font-size: 14px;
-      font-weight: 500;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      background-color: #007bff;
-      color: white;
-      transition: background-color 0.2s ease;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    button:disabled {
-      background-color: #aaa;
+    .cta-button:disabled {
+      background-color: #D4C8C1; /* Muted disabled state */
+      color: #A9A09A;
       cursor: not-allowed;
+      box-shadow: none;
+      transform: translateY(0);
     }
-    #status {
-      margin-top: 16px;
+
+    .status-message {
+      text-align: center;
       font-size: 12px;
-      color: #555;
+      min-height: 18px; /* Reserve space */
+      margin-bottom: 16px;
     }
+    .status-message.success {
+      background-color: var(--success-bg);
+      color: var(--success-text);
+      padding: 6px 12px;
+      border-radius: 100px; /* Pill shape */
+      display: inline-block;
+      font-weight: 500;
+    }
+    .status-message.error {
+      color: #D32F2F; /* Soft red for errors */
+      font-weight: 500;
+    }
+
+    .learn-more {
+      display: block;
+      text-align: center;
+      font-size: 12px;
+      color: var(--accent-secondary);
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: var(--border-radius-medium);
+      border: 1px solid transparent;
+      transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+      font-weight: 500;
+    }
+    .learn-more:hover {
+      color: #9A7EBF; /* Darker lavender */
+      border-color: #DCD0E8;
+      background-color: rgba(188, 160, 220, 0.05);
+    }
+    
+    .footer-spacer {
+        flex-grow: 1;
+    }
+
   </style>
 </head>
 <body>
-  <h2>Komponent: SVG to Component Set</h2>
-  <p>Select one or more SVG files. Each file will be converted into a Figma component set named <code>JP_<filename></code> with "Squarical", "Circular", and "Borderless" variants.</p>
-  
+  <div class="plugin-badge">✨ Komponent</div>
+
+  <div class="header">
+    <h1>Komponent</h1>
+    <div class="subtitle">SVG to Component Set</div>
+    <p>Upload one or more SVG files to generate a Figma component set with <strong>Squarical</strong>, <strong>Circular</strong>, and <strong>Borderless</strong> variants. Each will be named as <code>JP_<svgname></code>.</p>
+  </div>
+
+  <div class="upload-area" id="dropZone">
+    <div class="upload-icon">📤</div> <!-- Simple emoji or SVG icon -->
+    <p>Drag & drop SVGs here or click to upload</p>
+  </div>
   <input type="file" id="svgFileInput" multiple accept=".svg">
-  <button id="convertButton">Convert SVGs</button>
-  <div id="status"></div>
+
+  <button class="cta-button" id="convertButton">Convert SVGs</button>
+  
+  <div class="status-message" id="statusDisplay"></div>
+
+  <div class="footer-spacer"></div>
+  <a href="#" class="learn-more" id="learnMoreLink">Learn More</a>
 
   <script>
     const svgFileInput = document.getElementById('svgFileInput');
     const convertButton = document.getElementById('convertButton');
-    const statusDiv = document.getElementById('status');
+    const dropZone = document.getElementById('dropZone');
+    const statusDisplay = document.getElementById('statusDisplay');
+    // const learnMoreLink = document.getElementById('learnMoreLink'); // If it needs JS interaction
+
+    dropZone.onclick = () => svgFileInput.click();
+
+    dropZone.ondragover = (event) => {
+      event.preventDefault();
+      dropZone.classList.add('dragover');
+    };
+    dropZone.ondragleave = () => {
+      dropZone.classList.remove('dragover');
+    };
+    dropZone.ondrop = (event) => {
+      event.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (event.dataTransfer.files.length) {
+        svgFileInput.files = event.dataTransfer.files;
+        // Optionally trigger conversion or update UI to show file names
+        statusDisplay.textContent = `${event.dataTransfer.files.length} file(s) selected. Click "Convert".`;
+        statusDisplay.className = 'status-message'; // Reset class
+      }
+    };
+    
+    svgFileInput.onchange = () => {
+        if (svgFileInput.files.length > 0) {
+            statusDisplay.textContent = `${svgFileInput.files.length} file(s) selected. Click "Convert".`;
+            statusDisplay.className = 'status-message';
+        } else {
+            statusDisplay.textContent = '';
+        }
+    };
 
     convertButton.onclick = () => {
       const files = svgFileInput.files;
       if (!files || files.length === 0) {
-        statusDiv.textContent = 'Please select at least one SVG file.';
-        statusDiv.style.color = 'red';
+        statusDisplay.textContent = 'Please select or drop at least one SVG file.';
+        statusDisplay.className = 'status-message error';
         return;
       }
 
       convertButton.disabled = true;
-      statusDiv.textContent = `Processing ${files.length} file(s)...`;
-      statusDiv.style.color = '#555';
+      convertButton.textContent = 'Processing...';
+      statusDisplay.textContent = `Converting ${files.length} file(s)...`;
+      statusDisplay.className = 'status-message';
 
       const svgDataPromises = Array.from(files).map(file => {
         return new Promise((resolve, reject) => {
+          if (file.type !== "image/svg+xml") {
+            console.warn(`Skipping non-SVG file: ${file.name}`);
+            reject({ filename: file.name, error: 'Not an SVG file' });
+            return;
+          }
           const reader = new FileReader();
-          reader.onload = (event) => {
-            resolve({
-              filename: file.name,
-              svgContent: event.target.result
-            });
-          };
-          reader.onerror = (error) => {
-            console.error('File reading error:', error);
+          reader.onload = (e) => resolve({ filename: file.name, svgContent: e.target.result });
+          reader.onerror = (err) => {
+            console.error('File reading error:', err);
             reject({ filename: file.name, error: 'File reading error' });
           };
           reader.readAsText(file);
@@ -98,62 +275,57 @@
       Promise.allSettled(svgDataPromises)
         .then(results => {
           const successfulReads = [];
-          const failedReads = [];
+          let readErrors = 0;
+          let nonSvgErrors = 0;
 
           results.forEach(result => {
             if (result.status === 'fulfilled') {
               successfulReads.push(result.value);
             } else {
-              failedReads.push(result.reason);
+              if (result.reason.error === 'Not an SVG file') nonSvgErrors++;
+              else readErrors++;
+              console.error(`Failed to process ${result.reason.filename}: ${result.reason.error}`);
             }
           });
-
-          if (failedReads.length > 0) {
-            const failedFilenames = failedReads.map(f => f.filename).join(', ');
-            statusDiv.textContent = `Error reading some files: ${failedFilenames}. Check console.`;
-            statusDiv.style.color = 'red';
-            // Still send successful reads if any
-          }
           
+          let errorMessage = '';
+          if (nonSvgErrors > 0) errorMessage += `${nonSvgErrors} file(s) were not SVGs. `;
+          if (readErrors > 0) errorMessage += `${readErrors} file(s) could not be read. `;
+
           if (successfulReads.length > 0) {
             parent.postMessage({ pluginMessage: { type: 'convert-svgs', svgs: successfulReads } }, '*');
-            // Status update will come from the plugin code via figma.notify
-          } else if (failedReads.length === 0) {
-             statusDiv.textContent = 'No files processed.';
+            if(errorMessage) { // If there were some errors but also successes
+                statusDisplay.textContent = errorMessage + `Sending ${successfulReads.length} valid SVG(s) for conversion.`;
+                statusDisplay.className = 'status-message error'; // Show partial error
+            }
+            // Success message will come from plugin code
+          } else {
+            statusDisplay.textContent = errorMessage || 'No valid SVG files to process.';
+            statusDisplay.className = 'status-message error';
+            convertButton.disabled = false;
+            convertButton.textContent = 'Convert SVGs';
           }
-        })
-        .catch(error => { // Should not be reached if using Promise.allSettled correctly for reads
-          console.error('General error processing files:', error);
-          statusDiv.textContent = 'An unexpected error occurred. Check console.';
-          statusDiv.style.color = 'red';
-        })
-        .finally(() => {
-            // Re-enable button unless plugin code handles UI state further
-            // convertButton.disabled = false; 
-            // For now, let figma.notify be the primary feedback after this point.
         });
     };
 
-    // Listen for messages from the plugin code (e.g., completion or errors)
     window.onmessage = (event) => {
       const message = event.data.pluginMessage;
       if (message) {
         if (message.type === 'conversion-complete') {
-          statusDiv.textContent = message.message;
-          statusDiv.style.color = 'green';
+          statusDisplay.textContent = `✅ ${message.message}`; // Added checkmark
+          statusDisplay.className = 'status-message success';
           svgFileInput.value = ''; // Clear file input
-          convertButton.disabled = false;
         } else if (message.type === 'conversion-error') {
-          statusDiv.textContent = `Error: ${message.message}`;
-          statusDiv.style.color = 'red';
-          convertButton.disabled = false;
+          statusDisplay.textContent = `⚠️ ${message.message}`; // Added warning
+          statusDisplay.className = 'status-message error';
         } else if (message.type === 'processing-status') {
-            statusDiv.textContent = message.message;
-            statusDiv.style.color = '#555';
+            statusDisplay.textContent = message.message;
+            statusDisplay.className = 'status-message';
         }
+        convertButton.disabled = false;
+        convertButton.textContent = 'Convert SVGs';
       }
-    }
-
+    };
   </script>
 </body>
 </html>
